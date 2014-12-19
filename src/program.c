@@ -6,6 +6,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <linux/input.h>
+#include <regex.h>
 
 enum {
    RELEASED,
@@ -14,6 +15,7 @@ enum {
 };
 enum {
    RESULT_OK,
+   RESULT_FAILURE_OPEN_CONFIG,
    RESULT_FAILURE_OPEN_DEVICE
 };
 enum {
@@ -24,12 +26,14 @@ enum {
 };
 
 
-int verbose = VERBOSE_DEBUG; 
+int verbose = VERBOSE_DEBUG;
+char *DEVICE_INPUT_PATH="/dev/input/by-id/usb-Dell_Dell_USB_Entry_Keyboard-event-kbd";
+char *CONFIG_PATH="keyboard.conf"                                                     ;
  
-
+char *commands[256] = {};
 
 void echo(int level, const char *fmt, ...) {
-    if(verbose >= level){
+    if (verbose >= level) {
       va_list args;
       int ret = 0;
       va_start(args, fmt);
@@ -39,14 +43,37 @@ void echo(int level, const char *fmt, ...) {
 }
 
 
+char *rtrim(const char *s)
+{
+  while( isspace(*s) || !isprint(*s) ) ++s;
+  return strdup(s);
+}
+ 
+char *ltrim(const char *s)
+{
+  char *r = strdup(s);
+  if (r != NULL)
+  {
+    char *fr = r + strlen(s) - 1;
+    while( (isspace(*fr) || !isprint(*fr) || *fr == 0) && fr >= r) --fr;
+    *++fr = 0;
+  }
+  return r;
+}
+ 
+char *trim(const char *s)
+{
+  char *r = rtrim(s);
+  char *f = ltrim(r);
+  free(r);
+  return f;
+}
 
 
 /* External command execution */
 static int ext_exec(char *cmd) {
 
   int result;
-  
-  
   
   echo(VERBOSE_INFO ,"Executing: %s\n", cmd);
   
@@ -78,29 +105,97 @@ static int ext_exec(char *cmd) {
   return RESULT_OK;
 }
 
+char* substring(char* s, int start, int len){
+    char* subString = (char*)malloc((len + 1) * sizeof(char));
+    int n;
+    for(n = 0; n < len ; n++){
+      subString[n] = s[start + n];
+    }
+    return subString;
+}
 
+void init_commands(){
+  
+   FILE *file;
+   char * line = NULL;
+   size_t len = 0;
+   ssize_t read;
+    int i=0;
+   
+   file = fopen(CONFIG_PATH, "r");
+   if (file == NULL){
+    exit(RESULT_FAILURE_OPEN_CONFIG);
+   }
 
+  while ((read = getline(&line, &len, file)) != -1) {
+    
+     
+     int lineLen;
+     lineLen = strlen(line);
+              
+     if(lineLen < 3 || line[0]== '#' || line[0] == '\n' ||  line[0] == '\0' ){
+      // line start with comment
+      continue;
+     }
+
+//      printf("Retrieved line of length %zu :\n", read);
+//      printf("%s", line);
+     
+         char symbol;
+         int useKey=1;
+         
+                  
+         int key;         
+         char *command;
+   
+         for (i = 0; i <= lineLen; ++i) {
+           symbol = line[i]; 
+            if (symbol == ':' ) {
+              useKey = 0;
+           }
+           
+           if(!useKey){
+           
+              key = atoi(substring(line, 0, i));
+              command = substring(line, i+1,(lineLen));
+
+//              printf("KEY : %d\n", key);
+//              printf("COMMAND : %s\n", command);
+              command = trim(command);              
+              if ( key >= 0 && key < 256 && strlen(command)>0){
+                commands[key] = command;
+              }
+
+              break;
+           }
+
+     	   }
+   }
+
+   fclose(file);
+   if (line){ 
+    free(line);
+   }
+   printf("Loaded commands:");
+   for(i = 0; i < 256; i++) {
+    if(commands[i]){
+      printf("%d : %s\n", i, commands[i]);
+    }
+   }       
+          
+}
 int main(void) {
   FILE *file;
   struct input_event ev;
   char *command = "";
-  char *commands[256] = {};
   
+  init_commands();
+  
+     
   verbose = VERBOSE_DEBUG;
   // custom commands
   
-  commands[125] = "term-command 'source ~/.ssh/environment && a-git-pull && sleep 10'";
-  commands[29] = "term-command 'source ~/.ssh/environment && a-g-sync && sleep 10'";
-    
-  // vk
-  commands[67] = "terminator --hidden --config=fast -e vk.prevTrack";         // f9
-  commands[68] = "terminator --hidden --config=fast -e vk.nextTrack";         // f10
-  commands[87] = "terminator --hidden --config=fast -e vk.toggle";            // f11
-  commands[88] = "terminator --hidden --config=fast -e vk.addCurrentTrack";   // f12
-    
-  
-           
-  file = fopen("/dev/input/event5", "r");
+  file = fopen(DEVICE_INPUT_PATH, "r");
   if (!file) {
     perror("fopen");
     exit(RESULT_FAILURE_OPEN_DEVICE);
