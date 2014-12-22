@@ -16,7 +16,8 @@ enum {
 enum {
    RESULT_OK,
    RESULT_FAILURE_OPEN_CONFIG,
-   RESULT_FAILURE_OPEN_DEVICE
+   RESULT_FAILURE_OPEN_DEVICE,
+   RESULT_INVALID_OPTIONS
 };
 enum {
    VERBOSE_NONE,
@@ -27,8 +28,8 @@ enum {
 
 
 int verbose = VERBOSE_DEBUG;
-char *DEVICE_INPUT_PATH="/dev/input/by-id/usb-Dell_Dell_USB_Entry_Keyboard-event-kbd";
-char *CONFIG_PATH="keyboard.conf"                                                     ;
+char *DEVICE_INPUT_PATH = NULL;
+char *CONFIG_PATH = NULL;
  
 char *commands[256] = {};
 
@@ -114,6 +115,51 @@ char* substring(char* s, int start, int len){
     return subString;
 }
 
+static void usage() {
+    printf(
+	"    Options are as follows:\n"
+	"        -c <file>     Specify the configuration file to use\n"
+	"        -d <file>     Specify device file path\n"
+  "        -h            Show this help\n");
+}
+
+static void parse_options(int argc, char **argv) {
+    int c;
+        
+    while ((c = getopt (argc, argv, "d:c:h")) != -1){
+      switch (c) {
+          case 'h':
+            usage();
+            exit(RESULT_OK);
+            break;
+          case 'd':
+            if (!optarg) {
+              usage();
+              exit(RESULT_INVALID_OPTIONS);
+            }
+            DEVICE_INPUT_PATH = strdup(optarg); 
+            break;
+          case 'c':
+            if (!optarg) {
+                usage();
+                exit(RESULT_INVALID_OPTIONS);
+            }
+            CONFIG_PATH = strdup(optarg);
+            break;
+          default:
+            usage();
+            exit(RESULT_INVALID_OPTIONS);
+            
+      }
+    }
+    
+    if (CONFIG_PATH == NULL || DEVICE_INPUT_PATH == NULL){
+      usage();
+      exit(RESULT_INVALID_OPTIONS);
+    }
+}
+
+
 void init_commands(){
   
    FILE *file;
@@ -184,10 +230,15 @@ void init_commands(){
    }       
           
 }
-int main(void) {
+int main(int argc, char **argv) {
   FILE *file;
   struct input_event ev;
   char *command = "";
+  
+  parse_options(argc, argv);
+  
+  echo(VERBOSE_DEBUG, "DEVICE_INPUT_PATH: %s\n", DEVICE_INPUT_PATH);
+  echo(VERBOSE_DEBUG, "CONFIG_PATH: %s\n", CONFIG_PATH);
   
   init_commands();
   
