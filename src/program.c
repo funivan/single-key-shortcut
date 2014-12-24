@@ -253,7 +253,7 @@ int main(int argc, char **argv) {
   }
 
   int keyRelease = NULL;
-  int showKey = 0;
+  int showKey = 1;
   
   while(1){
     if(1 != fread(&ev, sizeof(struct input_event), 1, file)){
@@ -270,7 +270,6 @@ int main(int argc, char **argv) {
 
     if(showKey){
       echo(VERBOSE_INFO, "KEY fire %d\n", (int)ev.code);
-      continue;
     }
     
       command = commands[ev.code];
