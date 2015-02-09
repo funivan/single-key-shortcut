@@ -7,6 +7,9 @@
 #include <stdio.h>
 #include <linux/input.h>
 #include <regex.h>
+#include <X11/Xlib.h>
+#include <X11/extensions/XInput.h>
+#include <X11/extensions/XInput.h>
 
 enum {
    RELEASED,
@@ -17,7 +20,8 @@ enum {
    RESULT_OK,
    RESULT_FAILURE_OPEN_CONFIG,
    RESULT_FAILURE_OPEN_DEVICE,
-   RESULT_INVALID_OPTIONS
+   RESULT_INVALID_OPTIONS,
+   RESULT_FAILURE_OPEN_DISPLAY,
 };
 enum {
    VERBOSE_NONE,
@@ -118,18 +122,93 @@ char* substring(char* s, int start, int len){
 static void usage() {
     printf(
 	"    Options are as follows:\n"
+	"        -l            List available devices\n"
 	"        -c <file>     Specify the configuration file to use\n"
 	"        -d <file>     Specify device file path\n"
   "        -h            Show this help\n");
 }
 
+int list_devices()
+{
+  int idx;
+  int i;
+  int num_devices;
+
+  XInputClassInfo *ip;
+
+  Display *display = XOpenDisplay(NULL);
+
+
+  if(display == NULL) {
+   fprintf(stderr, "Could not connect to X server\n");
+   return RESULT_FAILURE_OPEN_DISPLAY;
+  }
+
+  XDeviceInfo *devices = XListInputDevices(display, &num_devices);
+
+  Atom xi_keyboard = XInternAtom(display, XI_KEYBOARD, 0);
+
+  Atom *props;
+  Atom prop;
+  int ndevs = 0;
+  int nprops = 0;
+
+  XDeviceInfo *info = XListInputDevices(display, &ndevs);
+  XDevice *device;
+  for(idx=0;idx<num_devices;++idx) {
+
+    if (xi_keyboard  != devices[idx].type) {
+      continue;
+    }
+
+    printf("%02d\t%s\n", (int)devices[idx].id, (char *)devices[idx].name);
+
+    device = XOpenDevice(display,  devices[idx].id);
+    if(!device) {
+      XFreeDeviceList(info);
+      printf("syntog: cannot open device '%s'\n",  devices[idx].name);
+      continue;
+    }
+
+    props = XListDeviceProperties(display, device, &nprops);
+    if(!props || !nprops) {
+      XCloseDevice(display, device);
+      XFree(props);
+      XFreeDeviceList(info);
+      printf("syntog: no properties on device '%s'\n", info[ndevs].name);
+    }
+
+    while(nprops--) {
+      if(props[nprops] == prop){
+        break;
+      }
+    }
+
+    if(!nprops) {
+      XCloseDevice(display, device);
+      XFree(props);
+      XFreeDeviceList(info);
+      printf("syntog: no synaptics properties on device '%s'\n", info[ndevs].name);
+    }
+
+  }
+
+  return 0;
+}
+
+
+
 static void parse_options(int argc, char **argv) {
     int c;
         
-    while ((c = getopt (argc, argv, "d:c:h")) != -1){
+    while ((c = getopt (argc, argv, "d:c:hl")) != -1){
       switch (c) {
           case 'h':
             usage();
+            exit(RESULT_OK);
+            break;
+          case 'l':
+            list_devices();
             exit(RESULT_OK);
             break;
           case 'd':
@@ -230,6 +309,7 @@ void init_commands(){
    }       
           
 }
+
 int main(int argc, char **argv) {
   FILE *file;
   struct input_event ev;
