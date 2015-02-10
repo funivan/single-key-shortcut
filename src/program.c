@@ -37,6 +37,17 @@ char *CONFIG_PATH = NULL;
  
 char *commands[256] = {};
 
+
+struct SupportedDeviceInfo {
+    int id;
+    char *name;
+    char *path;
+};
+
+typedef struct SupportedDeviceInfo SupportedDeviceInfo;
+
+
+
 void echo(int level, const char *fmt, ...) {
     if (verbose >= level) {
       va_list args;
@@ -148,6 +159,9 @@ int list_devices()
 
   Atom xi_keyboard = XInternAtom(display, XI_KEYBOARD, 0);
 
+  struct SupportedDeviceInfo supported_devices[num_devices];
+
+
   Atom *props;
   Atom prop;
   int ndevs = 0;
@@ -155,13 +169,21 @@ int list_devices()
 
   XDeviceInfo *info = XListInputDevices(display, &ndevs);
   XDevice *device;
+  
+  Atom act_type;
+  int act_format;
+  unsigned long nitems, bytes_after;
+  char *data;
+  char *ret;
+      
+  prop = XInternAtom (display, "Device Node", False);
+
+  int supportedItemNum=0;
   for(idx=0;idx<num_devices;++idx) {
 
     if (xi_keyboard  != devices[idx].type) {
       continue;
     }
-
-    printf("%02d\t%s\n", (int)devices[idx].id, (char *)devices[idx].name);
 
     device = XOpenDevice(display,  devices[idx].id);
     if(!device) {
@@ -170,29 +192,27 @@ int list_devices()
       continue;
     }
 
-    props = XListDeviceProperties(display, device, &nprops);
-    if(!props || !nprops) {
-      XCloseDevice(display, device);
-      XFree(props);
-      XFreeDeviceList(info);
-      printf("syntog: no properties on device '%s'\n", info[ndevs].name);
+    
+    if (!prop)  {
+      printf("Cant detect device node\n");
+      continue;
     }
-
-    while(nprops--) {
-      if(props[nprops] == prop){
-        break;
-      }
-    }
-
-    if(!nprops) {
-      XCloseDevice(display, device);
-      XFree(props);
-      XFreeDeviceList(info);
-      printf("syntog: no synaptics properties on device '%s'\n", info[ndevs].name);
-    }
-
+    
+    
+    // get property of device
+    XIGetProperty(display, devices[idx].id, prop, 0, 1000, False, AnyPropertyType, &act_type, &act_format, &nitems, &bytes_after, &data);
+    // store all device info to memory
+    SupportedDeviceInfo deviceInfo = {(int)devices[idx].id, (char *)devices[idx].name, (char *)data};
+    supported_devices[supportedItemNum] = deviceInfo;
+    supportedItemNum++;
+    XCloseDevice(display, device);
   }
-
+  
+  XCloseDisplay(display);
+  for ( i=0 ; i< supportedItemNum ; i++) {
+    printf("%02d\t%s\t%s\n", supported_devices[i].id, supported_devices[i].name, supported_devices[i].path);
+  }
+  
   return 0;
 }
 
@@ -245,7 +265,7 @@ void init_commands(){
    char * line = NULL;
    size_t len = 0;
    ssize_t read;
-    int i=0;
+   int i=0;
    
    file = fopen(CONFIG_PATH, "r");
    if (file == NULL){
