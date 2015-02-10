@@ -1,7 +1,7 @@
 #!/bin/sh
 
  ID=10
- xinput disable "$ID"
+ xinput enable "$ID"
  make
   ./out/program -d $ID -c keyboard.conf
   

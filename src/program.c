@@ -11,7 +11,7 @@
 #include <X11/extensions/XInput.h>
 #include <X11/extensions/XInput.h>
 #include <ctype.h>
-
+#include <X11/Xatom.h>
 
 enum {
   RELEASED
@@ -372,7 +372,7 @@ int main(int argc, char **argv) {
     int id = supported_devices[index]->id;
     if (DEVICE_ID == id) {
       DEVICE_PATH = supported_devices[index]->path;
-      echo(VERBOSE_INFO, "Detect device input file path");
+      echo(VERBOSE_INFO, "Detect device input file path\n");
       break;
     }
   }
@@ -393,6 +393,25 @@ int main(int argc, char **argv) {
     perror("fopen");
     exit(RESULT_FAILURE_OPEN_DEVICE);
   }
+
+  #
+  XDevice *xdevice = XOpenDevice(display, DEVICE_ID);
+  Atom prop = XInternAtom (display, "Device Enabled", True);
+  echo(VERBOSE_DEBUG, "try to enable device\n");
+  int format  = 8;
+
+  unsigned char *data;
+
+  Atom act_type, prop_edge, prop_twofinger;
+  int act_format;
+  unsigned long nitems, bytes_after;
+  XGetDeviceProperty (display, xdevice, prop, 0, 1, False, XA_INTEGER, &act_type, &act_format, &nitems, &bytes_after, &data);
+
+  printf("data:%s", data);
+//  XChangeProperty(display, DEVICE_ID, prop, XA_INTEGER, format, PropModeReplace, data, 1);
+  echo(VERBOSE_DEBUG, "enable device");
+
+  XCloseDevice(display, xdevice);
 
   int keyRelease = NULL;
   int showKey = 1;
