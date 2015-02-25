@@ -1,0 +1,30 @@
+#!/bin/bash
+f=/tmp/singlekey.log
+#f=/dev/stdout
+
+echo "Init" > $f
+
+set -e
+set -u
+set -E
+
+PROGRAMM="/usr/local/bin/singlekey"
+DEFAULT_CONFIG="${HOME}/.singlekey"
+
+echo "DEFAULT_CONFIG:$DEFAULT_CONFIG" >> $f 2>&1
+echo "PROGRAMM:$PROGRAMM" >> $f 2>&1
+# we only run if there is single-key-shortcut file
+if  [[ -f ${DEFAULT_CONFIG} ]] ; then
+    echo "Find config. Start" >> $f 2>&1
+    command="$PROGRAMM -c $DEFAULT_CONFIG"
+    
+    echo "$command" >> $f 2>&1
+    /usr/local/bin/singlekey -c /home/vagrant/.singlekey  2>&1 | tee -a $f
+else
+    echo "NO CONFIG FILE !!! " >> $f 2>&1
+    ls ~ >> $f 2>&1
+fi
+
+echo "End" >> $f 2>&1
+echo "-----------------------" >> $f 2>&1
+
