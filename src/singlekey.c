@@ -9,7 +9,7 @@
 #include <regex.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
-#include <X11/extensions/XInput.h>
+#include <X11/Xatom.h>
 #include <ctype.h>
 
 
@@ -104,14 +104,7 @@ static int ext_exec(char *cmd) {
     setsid();
     switch (fork()) {
       case 0:
-        result = execlp("sh", "sh", "-c", cmd, (char *) NULL);
-        // @todo doesen`t work
-        if (result == -1) {
-          echo(VERBOSE_WARNING, "[WARNING] Command failure: %s \n", cmd);
-        } else {
-          echo(VERBOSE_DEBUG, "[SUCCESS] %s \n", cmd);
-        }
-
+        execlp("sh", "sh", "-c", cmd, (char *) NULL);
         break;
       default:
         _exit(0);
@@ -136,7 +129,7 @@ char *substring(char *s, int start, int len) {
 }
 
 static void usage() {
-  printf("    Options are as follows:\n"
+  fprintf(stdout, "    Options are as follows:\n"
     "        -l            List available devices\n"
     "        -c <file>     Specify the configuration file to use\n"
     "        -h            Show this help\n");
@@ -166,6 +159,8 @@ void init_devices(Display *display, XDeviceInfo *devices, struct SupportedDevice
 
   prop = XInternAtom(display, "Device Node", False);
 
+  unsigned char *df = "/tmp/1";
+        
   for (idx = 0; idx < num_devices; ++idx) {
     supported_devices[idx] = malloc(sizeof(struct SupportedDeviceInfo));
     supported_devices[idx]->id = 0;
@@ -178,15 +173,14 @@ void init_devices(Display *display, XDeviceInfo *devices, struct SupportedDevice
 
     device = XOpenDevice(display, devices[idx].id);
     if (!device) {
-      XFreeDeviceList(info);
       fprintf(stderr, "[ERROR] Cannot open device '%s'\n", devices[idx].name);
+      XFreeDeviceList(info);
       continue;
     }
 
 
     if (!prop) {
-      printf("Cant detect device node\n");
-      
+      fprintf(stderr, "Cant detect device node\n");
       continue;
     }
 
@@ -196,10 +190,10 @@ void init_devices(Display *display, XDeviceInfo *devices, struct SupportedDevice
     // store all device info to memory
 
     supported_devices[idx]->id = (int) devices[idx].id;
+    int id = (int) devices[idx].id;
+    
     supported_devices[idx]->name = (char *) devices[idx].name;
     supported_devices[idx]->path = (char *) data;
-
-//        SupportedDeviceInfo deviceInfo = {, (char *) devices[idx].name, (char *) data};
 
     XCloseDevice(display, device);
   }
@@ -275,7 +269,6 @@ void read_config() {
 
 
     if (lineLen < 3) {
-      echo(VERBOSE_WARNING, "Invalid line");
       continue;
     }
 
@@ -313,12 +306,12 @@ void read_config() {
     free(line);
   }
   
-  echo(VERBOSE_INFO, "Loaded device ID: %d\n", DEVICE_ID);
-  echo(VERBOSE_INFO, "Loaded commands:\n");
+  echo(VERBOSE_INFO,"Loaded device ID: %d\n", DEVICE_ID); 
+  echo(VERBOSE_INFO,"Loaded commands:\n");
   
   for (i = 0; i < 256; i++) {
     if (commands[i]) {
-      echo(VERBOSE_INFO, "%d : %s\n", i, commands[i]);
+      echo(VERBOSE_INFO, "%d : %s\n", i, commands[i]); 
     }
   }
 
@@ -333,7 +326,9 @@ int main(int argc, char **argv) {
   parse_options(argc, argv);
 
   char *display_name = XDisplayName (NULL);
-  Display *display = XOpenDisplay(display_name );
+  fprintf(stdout, "[display_name] %s \n", display_name);
+
+  Display *display = XOpenDisplay(NULL);
 
   if (display == NULL) {
     fprintf(stderr, "[ERROR] Could not connect to X server\n");
@@ -352,7 +347,7 @@ int main(int argc, char **argv) {
     int index;
     for (index = 0; index < num_devices; ++index) {
       if (supported_devices[index] && supported_devices[index]->name) {
-        printf("%d\t%s\t\n", supported_devices[index]->id, supported_devices[index]->name);
+        echo(VERBOSE_INFO, "%d\t%s\t\n", supported_devices[index]->id, supported_devices[index]->name);
       }
     }
     
@@ -379,16 +374,15 @@ int main(int argc, char **argv) {
     }
   }
 
-  echo(VERBOSE_INFO, "DEVICE_PATH: %s\n", DEVICE_PATH);
+  echo(VERBOSE_INFO,"DEVICE_PATH: %s\n", DEVICE_PATH); 
 
   if (DEVICE_PATH == NULL) {
-    fprintf(stderr, "[ERROR] Can`t detect device input file path. Possible invalid device id\n");
-    echo(VERBOSE_INFO, "Can`t detect device input file path. Possible invalid device id\n");
+     fprintf(stderr, "[ERROR] Can`t detect device input file path. Possible invalid device id\n");
     exit(RESULT_INVALID_OPTIONS);
   }
 
 
-  echo(VERBOSE_INFO, "start open file\n");
+  echo(VERBOSE_INFO,"start open file\n"); 
 
 
   //verbose = VERBOSE_DEBUG;
@@ -396,8 +390,7 @@ int main(int argc, char **argv) {
   // custom commands
 
   file = fopen(DEVICE_PATH, "r");
-  echo(VERBOSE_INFO, "file:%c\n", file);
-  if (file==NULL) {
+  if ( file == NULL ) {
     fprintf(stderr, "[ERROR] Can`t open device input file\n");
     exit(RESULT_FAILURE_OPEN_KEYBOARD_DEVICE);
   }
@@ -405,9 +398,9 @@ int main(int argc, char **argv) {
     
  
   char buf[256];
-  //snprintf(buf, sizeof buf, "xinput disable %d", DEVICE_ID);
-  echo(VERBOSE_INFO, "Disable device with command: %s\n", buf);
-  //ext_exec(buf);
+  snprintf(buf, sizeof buf, "xinput disable %d", DEVICE_ID);
+  echo(VERBOSE_INFO,"Disable device with command: %s\n", buf);
+  ext_exec(buf);
   
 
   int keyRelease = NULL;
@@ -427,16 +420,16 @@ int main(int argc, char **argv) {
 
 
     if (showKey) {
-      echo(VERBOSE_INFO, "KEY fire %d\n", (int) ev.code);
+      echo(VERBOSE_INFO,"KEY fire %d\n", (int) ev.code); 
     }
 
     command = commands[ev.code];
 
     if (command && command[0] != '\0') {
-      echo(VERBOSE_INFO, "KEY %d\n", (int) ev.code);
+      echo(VERBOSE_INFO,"KEY %d\n", (int) ev.code); 
       ext_exec(command);
     } else {
-      echo(VERBOSE_DEBUG, "Empty Command %s\n", command);
+      echo(VERBOSE_INFO,"Empty Command %s\n", command); 
     }
 
 

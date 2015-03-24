@@ -4,12 +4,12 @@ all:
 	mkdir -p $(DIR)
 	gcc src/singlekey.c -lXi -lX11  -o $(DIR)/singlekey
 	
-	chmod +x $(DIR)/singlekey
 	cp src/singlekey_autostart $(DIR)/singlekey_autostart 
+	chmod +x $(DIR)/singlekey
 	
-	chmod +x $(DIR)/singlekey_autostart
 	cp src/singlekey.desktop $(DIR)/singlekey.desktop 
-	
+	chmod +x $(DIR)/singlekey_autostart
+		
 install:
 	install -m 0755 $(DIR)/singlekey $(prefix)/bin
 	install -m 0755 $(DIR)/singlekey_autostart $(prefix)/bin

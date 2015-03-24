@@ -13,8 +13,8 @@
  make
  
  if [[ "$1" == "-i" ]]; then
-    cp keyboard.conf ~/.singlekey
     make install
  else
   ./out/singlekey -c keyboard.conf
+  #xinput disable 10
  fi;
