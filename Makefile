@@ -9,6 +9,8 @@ all:
 	
 	cp src/singlekey.desktop $(DIR)/singlekey.desktop 
 	chmod +x $(DIR)/singlekey_autostart
+	
+	echo "# Default id\n10" >  $(DIR)/democonfig.conf
 		
 install:
 	install -m 0755 $(DIR)/singlekey $(prefix)/bin
