@@ -3,20 +3,6 @@
 
 Programs for second keyboard. 
 
-```
- 
- make 
-    
- ./out/program -d /dev/input/by-id/usb-Dell_Dell_USB_Entry_Keyboard-event-kbd -c keyboard.conf
- 
- sudo chown userName /dev/input/event5
- 
- xinput list-props 12
- xinput set-int-prop 12 "Device Enabled" 8 0 // disable
- xinput set-int-prop 12 "Device Enabled" 8 1 // enable
-
-
-```
 
 # How to build?
 
@@ -102,3 +88,11 @@ So open demo config `out/democonfig.conf` and add for example
 `zenity --info --text Hello` - command
 
 Run program `./out/singlekey -c out/democonfig.conf` and hit right arrow. 
+
+# How to disable/enable keyboard?
+
+```sh
+ id=12
+ xinput set-int-prop $id "Device Enabled" 8 0 // disable
+ xinput set-int-prop $id "Device Enabled" 8 1 // enable
+```
