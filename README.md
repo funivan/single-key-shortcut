@@ -1,8 +1,6 @@
 # One push - one command
-===================
 
 Programs for second keyboard. 
-
 
 # How to build?
 
