@@ -27,14 +27,14 @@ xinput
 You will see following output:
 ```
 ⎡ Virtual core pointer                        	id=2	[master pointer  (3)]
-⎜   ↳ Virtual core XTEST pointer              	id=4	[slave  pointer  (2)]
-⎜   ↳ Logitech USB Optical Mouse              	id=8	[slave  pointer  (2)]
-⎜   ↳ SIGMACHIP USB Keyboard                  	id=12	[slave  pointer  (2)]
+⎜   ↳ Virtual core XTEST pointer                	id=4	[slave  pointer  (2)]
+⎜   ↳ Logitech USB Optical Mouse                	id=8	[slave  pointer  (2)]
+⎜   ↳ SIGMACHIP USB Keyboard                    	id=12	[slave  pointer  (2)]
 ⎣ Virtual core keyboard                       	id=3	[master keyboard (2)]
     ↳ Virtual core XTEST keyboard             	id=5	[slave  keyboard (3)]
     ↳ Power Button                            	id=6	[slave  keyboard (3)]
     ↳ Power Button                            	id=7	[slave  keyboard (3)]
-    ↳ Sennheiser USB headset	                  id=9	[slave  keyboard (3)]
+    ↳ Sennheiser USB headset	                    id=9	[slave  keyboard (3)]
     ↳ SIGMACHIP USB Keyboard                  	id=11	[slave  keyboard (3)]
     ↳ Dell Dell USB Entry Keyboard            	id=10	[slave  keyboard (3)]
 
