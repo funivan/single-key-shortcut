@@ -132,6 +132,7 @@ static void usage() {
   fprintf(stdout, "    Options are as follows:\n"
     "        -l            List available devices\n"
     "        -c <file>     Specify the configuration file to use\n"
+    "        -d <id>       Specify the device id. Keyboard id in the configuration file will be overwritten\n"
     "        -h            Show this help\n");
 }
 
@@ -210,6 +211,14 @@ static void parse_options(int argc, char **argv) {
       case 'l':
         current_action = ACTION_LIST_DEVICES;
         break;
+      case 'd':
+        DEVICE_ID = atoi(strdup(optarg));
+
+        if (DEVICE_ID == 0) {
+          echo(VERBOSE_WARNING, "Invalid device id");
+          exit(RESULT_INVALID_OPTIONS);
+        }
+      break;
       case 'c':
         if (!optarg) {
           usage();
@@ -261,6 +270,7 @@ void read_config() {
     if (DEVICE_ID == 0) {
        DEVICE_ID = atoi(line);
        if(DEVICE_ID == 0){
+         fprintf(stderr, "[ERROR] Invalid device id\n");
          exit(RESULT_INVALID_CONFIG_DEVICE_ID);
        }
        continue;
@@ -377,7 +387,7 @@ int main(int argc, char **argv) {
   echo(VERBOSE_INFO,"DEVICE_PATH: %s\n", DEVICE_PATH); 
 
   if (DEVICE_PATH == NULL) {
-     fprintf(stderr, "[ERROR] Can`t detect device input file path. Possible invalid device id\n");
+    fprintf(stderr, "[ERROR] Can`t detect device input file path. Possible invalid device id\n");
     exit(RESULT_INVALID_OPTIONS);
   }
 

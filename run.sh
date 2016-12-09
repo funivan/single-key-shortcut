@@ -7,14 +7,14 @@
 #
 #
 
-  export SHELL="/bin/bash"
-  export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export SHELL="/bin/bash"
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
- make
+make build
  
- if [[ "$1" == "-i" ]]; then
-    make install
- else
-  ./out/singlekey -c keyboard.conf
-  #xinput disable 10
- fi;
+if [[ "$1" == "-i" ]]; then
+  make install
+else
+./out/singlekey -c keyboard.conf
+#xinput disable 10
+fi;
