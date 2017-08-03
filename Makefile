@@ -2,8 +2,13 @@ DIR=./out
 prefix=/usr/local
 all: 
 	@echo "Select target"
+	@echo "- build"
+	@echo "- install"
+	@echo "- autostart"
+	@echo "- uninstall"
+	@echo "- clean"
 
-build: cleanBuild
+build: clean
 	@echo "\n---- Build project"
 
 	mkdir -p $(DIR)
@@ -17,7 +22,7 @@ build: cleanBuild
 	
 	echo "# Default id\n10" >  $(DIR)/democonfig.conf
 
-cleanBuild:
+clean:
 	@echo "\n---- Remove all compiled files"
 	rm -rf $(DIR)/*
 
@@ -30,7 +35,7 @@ autostart: install
 	install -m 0755 $(DIR)/singlekey_autostart $(prefix)/bin
 	install -m 0755 $(DIR)/singlekey.desktop /etc/xdg/autostart/
 
-clean: cleanBuild
+uninstall: clean
 	@echo "\n---- Remove all installed files"
 	rm -rf $(prefix)/bin/singlekey
 	rm -rf $(prefix)/bin/singlekey_autostart
