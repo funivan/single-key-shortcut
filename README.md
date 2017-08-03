@@ -10,7 +10,7 @@ sudo apt-get install libx11-dev libxi-dev
 ```
 - run make
 ```sh
-make
+make build
 ```
  
  

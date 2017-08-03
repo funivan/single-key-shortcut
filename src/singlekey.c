@@ -9,8 +9,11 @@
 #include <regex.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/XInput.h>
+#include <X11/extensions/XInput2.h>
 #include <X11/Xatom.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <sys/wait.h> 
 
 
 enum {
@@ -155,7 +158,7 @@ void init_devices(Display *display, XDeviceInfo *devices, struct SupportedDevice
   Atom act_type;
   int act_format;
   unsigned long nitems, bytes_after;
-  char *data;
+  unsigned char *data;
   char *ret;
 
   prop = XInternAtom(display, "Device Node", False);
@@ -187,7 +190,20 @@ void init_devices(Display *display, XDeviceInfo *devices, struct SupportedDevice
 
 
     // get property of device
-    XIGetProperty(display, devices[idx].id, prop, 0, 1000, False, AnyPropertyType, &act_type, &act_format, &nitems, &bytes_after, &data);
+    XIGetProperty(
+      display,
+      devices[idx].id, 
+      prop, 
+      0, 
+      1000, 
+      False, 
+      AnyPropertyType, 
+      &act_type, 
+      &act_format, 
+      &nitems, 
+      &bytes_after, 
+      &data
+    );
     // store all device info to memory
 
     supported_devices[idx]->id = (int) devices[idx].id;
@@ -413,7 +429,7 @@ int main(int argc, char **argv) {
   ext_exec(buf);
   
 
-  int keyRelease = NULL;
+  int keyRelease;
   int showKey = 1;
 
   while (1) {
